@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id                 String        @id @default(cuid())
+  telegramId         String
+  chain              String
+  address            String
+  encryptedPrivateKey String
+  encryptedMnemonic  String?
+  createdAt          DateTime      @default(now())
+  transactions       Transaction[]
+  txErrors           TxError[]
+
+  @@unique([telegramId, chain])
+}
+
+model Account {
+  id                   String   @id @default(cuid())
+  telegramId           String   @unique
+  username             String?
+  nickname             String?
+  channelName          String?
+  notes                String?
+  language             String   @default("ru")
+  notificationsEnabled Boolean  @default(true)
+  displayCurrency      String   @default("USD")
+  lastActive           DateTime @updatedAt
+  createdAt            DateTime @default(now())
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  chain       String
+  type        String
+  amount      String
+  asset       String
+  toAddress   String?
+  fromAddress String?
+  txHash      String?
+  status      String   @default("pending")
+  fee         String?
+  memo        String?
+  createdAt   DateTime @default(now())
+}
+
+model TxError {
+  id           String   @id @default(cuid())
+  walletId     String
+  wallet       Wallet   @relation(fields: [walletId], references: [id])
+  chain        String
+  amount       String
+  errorCode    String
+  errorMessage String
+  timestamp    DateTime @default(now())
+}
+
+model AddressBook {
+  id         String   @id @default(cuid())
+  telegramId String
+  name       String
+  address    String
+  chain      String
+  createdAt  DateTime @default(now())
+}
+
+model Backup {
+  id          String   @id @default(cuid())
+  filename    String
+  walletCount Int
+  createdAt   DateTime @default(now())
+}
+
+model IpBlock {
+  id           String   @id @default(cuid())
+  ip           String   @unique
+  blockedUntil DateTime
+  reason       String
+}
